@@ -1,3 +1,8 @@
+## 2025-06-24 21:38:40 - 1.2.3
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 21:38:40 - Fix workflow: delete existing assets before upload
 
 ### Changed Files:
