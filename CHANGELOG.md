@@ -1,3 +1,9 @@
+## 2025-06-24 21:19:58 - Fix Update URI and add cache clearing functions
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 21:19:42 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
