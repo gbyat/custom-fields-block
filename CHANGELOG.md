@@ -1,3 +1,8 @@
+## 2025-06-24 17:15:51 - 1.1.0
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 17:15:51 - Remove deployment guide from documentation and update README to reference CHANGELOG for version history.
 
 ### Changed Files:
