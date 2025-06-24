@@ -589,12 +589,37 @@ class CustomFieldsBlock
             $this->clear_custom_fields_cache();
             echo '<div class="notice notice-success"><p>Custom Fields Cache wurde geleert!</p></div>';
         }
+
+        if (isset($_POST['cfb_clear_update_cache']) && wp_verify_nonce($_POST['cfb_nonce'], 'cfb_clear_update_cache')) {
+            $this->clear_update_cache();
+            echo '<div class="notice notice-success"><p>Update Cache wurde geleert!</p></div>';
+        }
+
+        // Debug current status
+        $current_version = CFB_VERSION;
+        $latest_release = $this->get_latest_release();
+        $latest_version = $latest_release ? $latest_release['version'] : 'Nicht verfügbar';
+
     ?>
         <p>
-        <form method="post">
+            <strong>Aktuelle Version:</strong> <?php echo esc_html($current_version); ?><br>
+            <strong>Neueste Version:</strong> <?php echo esc_html($latest_version); ?><br>
+            <strong>Update verfügbar:</strong> <?php echo ($latest_release && version_compare($latest_version, $current_version, '>')) ? 'Ja' : 'Nein'; ?>
+        </p>
+
+        <p>
+        <form method="post" style="display: inline;">
             <?php wp_nonce_field('cfb_clear_cache', 'cfb_nonce'); ?>
-            <input type="submit" name="cfb_clear_cache" class="button button-secondary" value="Cache leeren" />
-            <span class="description">Leert den Cache und lädt alle Custom Fields neu.</span>
+            <input type="submit" name="cfb_clear_cache" class="button button-secondary" value="Custom Fields Cache leeren" />
+            <span class="description">Leert den Custom Fields Cache.</span>
+        </form>
+        </p>
+
+        <p>
+        <form method="post" style="display: inline;">
+            <?php wp_nonce_field('cfb_clear_update_cache', 'cfb_nonce'); ?>
+            <input type="submit" name="cfb_clear_update_cache" class="button button-secondary" value="Update Cache leeren" />
+            <span class="description">Leert den Update Cache und erzwingt eine neue Prüfung.</span>
         </form>
         </p>
     <?php
