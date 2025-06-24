@@ -1,3 +1,8 @@
+## 2025-06-24 21:31:46 - 1.2.1
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 21:31:45 - Add functionality to clear update cache and display current/latest version information
 
 ### Changed Files:
