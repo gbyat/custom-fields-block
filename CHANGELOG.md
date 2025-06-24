@@ -1,3 +1,9 @@
+## 2025-06-24 17:42:24 - Fix workflow: add version sync and package.json to release
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 17:42:06 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
