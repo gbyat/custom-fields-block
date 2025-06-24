@@ -1,3 +1,9 @@
+## 2025-06-24 17:15:51 - Remove deployment guide from documentation and update README to reference CHANGELOG for version history.
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 17:14:16 - Remove obsolete deployment and test scripts and add to .gitignore
 
 ### Changed Files:
