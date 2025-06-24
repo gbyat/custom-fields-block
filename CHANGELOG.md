@@ -1,3 +1,9 @@
+## 2025-06-24 21:26:12 - Improve custom fields detection for templates
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 21:24:36 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
