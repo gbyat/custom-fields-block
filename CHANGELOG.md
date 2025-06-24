@@ -1,3 +1,8 @@
+## 2025-06-24 21:26:13 - 1.1.4
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 21:26:12 - Improve custom fields detection for templates
 
 ### Changed Files:
