@@ -1,3 +1,8 @@
+## 2025-06-24 17:42:06 - Bump version to $(node -p 'require(\'./package.json\').version')
+
+### Changed Files:
+- `.github/workflows/release.yml`
+
 ## 2025-06-24 17:31:04 - 1.1.1
 
 ### Changed Files:
