@@ -2,14 +2,14 @@
 
 /**
  * Plugin Name: Custom Fields Block
- * Plugin URI: https://github.com/your-username/custom-fields-block
+ * Plugin URI: https://github.com/gbyat/custom-fields-block
  * Description: Fügt native WordPress Custom Fields als Blöcke mit Typografie- und Farboptionen ein
  * Version: 1.1.2
  * Author: Gabriele Laesser
  * License: GPL v2 or later
  * Text Domain: custom-fields-block
  * Domain Path: /languages
- * Update URI: https://github.com/your-username/custom-fields-block/releases/latest/download/custom-fields-block.zip
+ * Update URI: https://github.com/gbyat/custom-fields-block/releases/latest/download/custom-fields-block.zip
  */
 
 // Prevent direct access
@@ -197,6 +197,28 @@ class CustomFieldsBlock
         }
 
         return $response;
+    }
+
+    /**
+     * Clear update cache manually
+     */
+    public function clear_update_cache()
+    {
+        delete_transient('cfb_latest_release');
+        delete_site_transient('update_plugins');
+    }
+
+    /**
+     * Debug function to check latest release
+     */
+    public function debug_latest_release()
+    {
+        $latest = $this->get_latest_release();
+        if ($latest) {
+            error_log('Custom Fields Block Debug - Latest Release: ' . print_r($latest, true));
+        } else {
+            error_log('Custom Fields Block Debug - No latest release found');
+        }
     }
 
     /**

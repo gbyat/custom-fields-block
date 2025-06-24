@@ -1,3 +1,8 @@
+## 2025-06-24 21:19:42 - Bump version to $(node -p 'require(\'./package.json\').version')
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 17:42:24 - 1.1.2
 
 ### Changed Files:
