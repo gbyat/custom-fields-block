@@ -1,3 +1,9 @@
+## 2025-06-24 21:48:31 - Add detailed debug information for GitHub API
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 21:48:07 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
