@@ -1,3 +1,9 @@
+## 2025-06-24 21:28:31 - Add centralized custom fields caching system
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 21:28:15 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
