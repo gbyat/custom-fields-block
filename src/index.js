@@ -110,9 +110,32 @@ registerBlockType('custom-fields-block/custom-field', {
                         padding: '20px',
                         border: '2px dashed #ccc',
                         textAlign: 'center',
-                        color: '#666'
+                        color: '#666',
+                        backgroundColor: '#f9f9f9'
                     }}>
-                        {__('Wählen Sie ein Custom Field aus', 'custom-fields-block')}
+                        <div style={{ marginBottom: '15px' }}>
+                            <strong>{__('Custom Field Block', 'custom-fields-block')}</strong>
+                        </div>
+                        <SelectControl
+                            label={__('Custom Field auswählen:', 'custom-fields-block')}
+                            value={fieldKey}
+                            options={[
+                                { label: __('-- Feld auswählen --', 'custom-fields-block'), value: '' },
+                                ...customFields.map(field => ({
+                                    label: field.label,
+                                    value: field.key
+                                }))
+                            ]}
+                            onChange={updateFieldValue}
+                        />
+                        <div style={{
+                            marginTop: '10px',
+                            fontSize: '12px',
+                            color: '#888',
+                            fontStyle: 'italic'
+                        }}>
+                            {__('Wählen Sie ein Custom Field aus der Liste oben aus', 'custom-fields-block')}
+                        </div>
                     </div>
                 );
             }
@@ -121,7 +144,37 @@ registerBlockType('custom-fields-block/custom-field', {
                 <h2 style={previewStyles}>{fieldValue}</h2> :
                 <p style={previewStyles}>{fieldValue}</p>;
 
-            return content;
+            return (
+                <div style={{ position: 'relative' }}>
+                    {content}
+                    {/* Quick field selector overlay */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '-10px',
+                        right: '-10px',
+                        background: '#fff',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        padding: '5px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        zIndex: 10,
+                        minWidth: '200px'
+                    }}>
+                        <SelectControl
+                            label={__('Feld ändern:', 'custom-fields-block')}
+                            value={fieldKey}
+                            options={[
+                                { label: __('-- Feld auswählen --', 'custom-fields-block'), value: '' },
+                                ...customFields.map(field => ({
+                                    label: field.label,
+                                    value: field.key
+                                }))
+                            ]}
+                            onChange={updateFieldValue}
+                        />
+                    </div>
+                </div>
+            );
         };
 
         return (

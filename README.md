@@ -155,10 +155,4 @@ Bei Fragen oder Problemen erstellen Sie bitte ein Issue im GitHub Repository.
 
 ## Changelog
 
-### Version 1.0.0
-
-- Erste Veröffentlichung
-- Grundlegende Custom Field Block-Funktionalität
-- Typografie- und Farboptionen
-- Responsive Design
-- Wide-Alignment Support
+Das vollständige Changelog finden Sie in der Datei [CHANGELOG.md](./CHANGELOG.md).

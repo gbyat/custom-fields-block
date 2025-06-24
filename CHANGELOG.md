@@ -1,0 +1,18 @@
+## 2025-06-24 17:14:16 - Remove obsolete deployment and test scripts and add to .gitignore
+
+### Changed Files:
+- `CHANGELOG.md`
+- `README.md`
+- `src/index.js`
+
+# Changelog
+
+Alle Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
+
+## Version 1.0.0
+
+- Erste Veröffentlichung
+- Grundlegende Custom Field Block-Funktionalität
+- Typografie- und Farboptionen
+- Responsive Design
+- Wide-Alignment Support
