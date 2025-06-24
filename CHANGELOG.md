@@ -1,3 +1,9 @@
+## 2025-06-24 21:38:40 - Fix workflow: delete existing assets before upload
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 21:38:28 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
