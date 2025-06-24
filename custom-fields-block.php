@@ -204,10 +204,23 @@ class CustomFieldsBlock
      */
     public function init()
     {
+        // Debug: Check if build directory exists
+        if (!file_exists(CFB_PLUGIN_DIR . 'build/block.json')) {
+            error_log('Custom Fields Block: build/block.json not found!');
+            return;
+        }
+
         // Register block
-        register_block_type(CFB_PLUGIN_DIR . 'build', array(
+        $block_result = register_block_type(CFB_PLUGIN_DIR . 'build', array(
             'render_callback' => array($this, 'render_block'),
         ));
+
+        // Debug: Check if block registration was successful
+        if (!$block_result) {
+            error_log('Custom Fields Block: Failed to register block!');
+        } else {
+            error_log('Custom Fields Block: Block registered successfully!');
+        }
 
         // Load text domain
         load_plugin_textdomain('custom-fields-block', false, dirname(plugin_basename(__FILE__)) . '/languages');

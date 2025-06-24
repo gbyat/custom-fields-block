@@ -25,6 +25,9 @@ jobs:
       - name: Build plugin
         run: npm run build
 
+      - name: List build contents
+        run: ls -la build/
+
       - name: Create deployment package
         run: |
           mkdir -p deployment
@@ -33,10 +36,15 @@ jobs:
           cp INSTALLATION.md deployment/
           cp -r build deployment/
           cp -r languages deployment/ 2>/dev/null || true
+          echo "Deployment package contents:"
+          ls -la deployment/
+          echo "Build contents:"
+          ls -la deployment/build/
           cd deployment
           zip -r ../custom-fields-block.zip .
 
       - name: Create Release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,6 +65,7 @@ jobs:
             - Bug fixes and improvements
             - Enhanced typography options
             - Better color management
+            - GitHub update system integration
           draft: false
           prerelease: false
 
