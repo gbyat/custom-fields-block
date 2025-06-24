@@ -47,5 +47,7 @@ jobs:
         with:
           files: custom-fields-block.zip
           generate_release_notes: true
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
