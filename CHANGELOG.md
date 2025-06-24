@@ -1,3 +1,8 @@
+## 2025-06-24 17:31:04 - 1.1.1
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 17:31:04 - Update workflow to auto-publish releases
 
 ### Changed Files:
