@@ -213,6 +213,16 @@ class CustomFieldsBlock
     {
         delete_transient('cfb_latest_release');
         delete_site_transient('update_plugins');
+        delete_site_transient('update_themes');
+        delete_site_transient('update_core');
+
+        // Force WordPress to check for updates immediately
+        wp_schedule_single_event(time(), 'wp_version_check');
+        wp_schedule_single_event(time(), 'wp_update_plugins');
+        wp_schedule_single_event(time(), 'wp_update_themes');
+
+        // Clear any cached plugin data
+        wp_cache_flush();
     }
 
     /**
