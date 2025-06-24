@@ -1,0 +1,137 @@
+/* Custom Fields Block Frontend Styles */
+
+.cfb-block {
+    position: relative;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Typography */
+.cfb-block h1,
+.cfb-block h2,
+.cfb-block h3,
+.cfb-block h4,
+.cfb-block h5,
+.cfb-block h6 {
+    margin: 0 0 1rem 0;
+    line-height: 1.2;
+    font-weight: 600;
+}
+
+.cfb-block h1:last-child,
+.cfb-block h2:last-child,
+.cfb-block h3:last-child,
+.cfb-block h4:last-child,
+.cfb-block h5:last-child,
+.cfb-block h6:last-child {
+    margin-bottom: 0;
+}
+
+.cfb-block p {
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+}
+
+.cfb-block p:last-child {
+    margin-bottom: 0;
+}
+
+/* Alignment */
+.cfb-block.has-text-align-left {
+    text-align: left;
+}
+
+.cfb-block.has-text-align-center {
+    text-align: center;
+}
+
+.cfb-block.has-text-align-right {
+    text-align: right;
+}
+
+/* Wide alignment */
+.wp-block-custom-fields-block-custom-field.alignwide {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Colors */
+.cfb-block.has-text-color {
+    color: var(--wp--preset--color--text);
+}
+
+.cfb-block.has-background {
+    background-color: var(--wp--preset--color--background);
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+    .cfb-block h1 {
+        font-size: 1.75rem !important;
+    }
+    
+    .cfb-block h2 {
+        font-size: 1.5rem !important;
+    }
+    
+    .cfb-block h3 {
+        font-size: 1.25rem !important;
+    }
+    
+    .cfb-block h4 {
+        font-size: 1.125rem !important;
+    }
+    
+    .cfb-block h5 {
+        font-size: 1rem !important;
+    }
+    
+    .cfb-block h6 {
+        font-size: 0.875rem !important;
+    }
+    
+    .cfb-block p {
+        font-size: 0.9rem !important;
+    }
+    
+    .wp-block-custom-fields-block-custom-field.alignwide {
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    
+    .cfb-block.has-background {
+        padding: 0.75rem 1rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .cfb-block {
+        break-inside: avoid;
+    }
+    
+    .cfb-block.has-background {
+        background-color: transparent !important;
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .cfb-block.has-background {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .cfb-block {
+        transition: none !important;
+    }
+} 

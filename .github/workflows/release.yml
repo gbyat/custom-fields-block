@@ -1,0 +1,71 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deployment
+          cp custom-fields-block.php deployment/
+          cp README.md deployment/
+          cp INSTALLATION.md deployment/
+          cp -r build deployment/
+          cp -r languages deployment/ 2>/dev/null || true
+          cd deployment
+          zip -r ../custom-fields-block.zip .
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## What's Changed
+
+            This release includes the latest updates and improvements to the Custom Fields Block plugin.
+
+            ### Installation
+            1. Download the ZIP file below
+            2. Go to WordPress Admin → Plugins → Add New → Upload Plugin
+            3. Upload the ZIP file and activate the plugin
+
+            ### Changelog
+            - Bug fixes and improvements
+            - Enhanced typography options
+            - Better color management
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./custom-fields-block.zip
+          asset_name: custom-fields-block.zip
+          asset_content_type: application/zip

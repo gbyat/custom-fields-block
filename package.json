@@ -1,0 +1,44 @@
+{
+  "name": "custom-fields-block",
+  "version": "1.0.0",
+  "description": "WordPress plugin to display native custom fields as blocks with typography and color options",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "format": "wp-scripts format",
+    "lint:css": "wp-scripts lint-style",
+    "lint:js": "wp-scripts lint-js",
+    "lint:js:fix": "wp-scripts lint-js --fix",
+    "packages-update": "wp-scripts packages-update",
+    "deploy": "powershell -ExecutionPolicy Bypass -File deploy.ps1",
+    "deploy:local": "powershell -ExecutionPolicy Bypass -File deploy.ps1 \"C:\\inetpub\\wwwroot\\wp_webentwicklerin\\wp-content\\plugins\\custom-fields-block\"",
+    "deploy:production": "powershell -ExecutionPolicy Bypass -File deploy.ps1 \"C:\\inetpub\\wwwroot\\wp-content\\plugins\\custom-fields-block\"",
+    "deploy:remote": "powershell -ExecutionPolicy Bypass -File deploy-remote.ps1",
+    "deploy:webgo": "powershell -ExecutionPolicy Bypass -File deploy-config.ps1 webgo",
+    "deploy:allinkl": "powershell -ExecutionPolicy Bypass -File deploy-config.ps1 allinkl",
+    "package": "npm run build && powershell Compress-Archive -Path custom-fields-block.php,README.md,INSTALLATION.md,build,languages -DestinationPath custom-fields-block.zip -Force",
+    "release:patch": "npm version patch && git push && git push --tags",
+    "release:minor": "npm version minor && git push && git push --tags",
+    "release:major": "npm version major && git push && git push --tags"
+  },
+  "keywords": [
+    "wordpress",
+    "block",
+    "custom-fields",
+    "typography",
+    "colors"
+  ],
+  "author": "Your Name",
+  "license": "GPL-2.0-or-later",
+  "devDependencies": {
+    "@wordpress/scripts": "^26.0.0"
+  },
+  "dependencies": {
+    "@wordpress/block-editor": "^12.0.0",
+    "@wordpress/blocks": "^12.0.0",
+    "@wordpress/components": "^25.0.0",
+    "@wordpress/element": "^5.0.0",
+    "@wordpress/i18n": "^4.0.0"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "apiVersion": 2,
+  "name": "custom-fields-block/custom-field",
+  "title": "Custom Field",
+  "category": "widgets",
+  "icon": "admin-customizer",
+  "description": "Fügt ein natives WordPress Custom Field als Block ein",
+  "supports": {
+    "html": false,
+    "align": ["left", "center", "right", "wide"],
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true,
+      "letterSpacing": true
+    },
+    "spacing": {
+      "margin": ["top", "bottom"],
+      "padding": ["top", "bottom"]
+    }
+  },
+  "attributes": {
+    "fieldKey": {
+      "type": "string",
+      "default": ""
+    },
+    "displayType": {
+      "type": "string",
+      "default": "paragraph"
+    },
+    "typography": {
+      "type": "object",
+      "default": {}
+    },
+    "colors": {
+      "type": "object",
+      "default": {}
+    },
+    "spacing": {
+      "type": "object",
+      "default": {}
+    },
+    "alignment": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "textdomain": "custom-fields-block",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style.css"
+}
