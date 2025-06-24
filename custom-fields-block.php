@@ -5,7 +5,7 @@
  * Plugin URI: https://github.com/your-username/custom-fields-block
  * Description: Fügt native WordPress Custom Fields als Blöcke mit Typografie- und Farboptionen ein
  * Version: 1.0.13
- * Author: Your Name
+ * Author: Gabriele Laesser
  * License: GPL v2 or later
  * Text Domain: custom-fields-block
  * Domain Path: /languages
@@ -141,8 +141,8 @@ class CustomFieldsBlock
             'Accept' => 'application/vnd.github.v3+json'
         );
 
-        // Add GitHub token if available (for private repos)
-        $github_token = defined('CFB_GITHUB_TOKEN') ? CFB_GITHUB_TOKEN : '';
+        // Token aus den Plugin-Optionen holen
+        $github_token = get_option('cfb_github_token', '');
         if (!empty($github_token)) {
             $headers['Authorization'] = 'token ' . $github_token;
         }

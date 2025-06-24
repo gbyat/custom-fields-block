@@ -18,9 +18,9 @@
     "deploy:webgo": "powershell -ExecutionPolicy Bypass -File deploy-config.ps1 webgo",
     "deploy:allinkl": "powershell -ExecutionPolicy Bypass -File deploy-config.ps1 allinkl",
     "package": "npm run build && powershell Compress-Archive -Path custom-fields-block.php,README.md,INSTALLATION.md,build,languages -DestinationPath custom-fields-block.zip -Force",
-    "release:patch": "npm version patch && git push && git push --tags",
-    "release:minor": "npm version minor && git push && git push --tags",
-    "release:major": "npm version major && git push && git push --tags",
+    "release:patch": "npm version patch && npm run version-sync && git add custom-fields-block.php package.json && git commit -m \"Bump version to $(node -p 'require(\\'./package.json\\').version')\" && git push origin main --tags",
+    "release:minor": "npm version minor && npm run version-sync && git add custom-fields-block.php package.json && git commit -m \"Bump version to $(node -p 'require(\\'./package.json\\').version')\" && git push origin main --tags",
+    "release:major": "npm version major && npm run version-sync && git add custom-fields-block.php package.json && git commit -m \"Bump version to $(node -p 'require(\\'./package.json\\').version')\" && git push origin main --tags",
     "version-sync": "node scripts/sync-version.js"
   },
   "keywords": [
