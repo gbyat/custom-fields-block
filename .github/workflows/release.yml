@@ -25,22 +25,18 @@ jobs:
       - name: Build plugin
         run: npm run build
 
-      - name: List build contents
-        run: ls -la build/
-
-      - name: Create deployment package
+      - name: Prepare release folder
         run: |
-          mkdir -p deployment
-          cp custom-fields-block.php deployment/
-          cp README.md deployment/
-          cp INSTALLATION.md deployment/
-          cp -r build deployment/
-          cp -r languages deployment/ 2>/dev/null || true
-          echo "Deployment package contents:"
-          ls -la deployment/
-          echo "Build contents:"
-          ls -la deployment/build/
-          cd deployment
+          mkdir release
+          cp custom-fields-block.php release/
+          cp README.md release/
+          cp INSTALLATION.md release/
+          cp -r build release/
+          if [ -d languages ]; then cp -r languages release/; fi
+
+      - name: Create ZIP
+        run: |
+          cd release
           zip -r ../custom-fields-block.zip .
 
       - name: Create Release
@@ -52,20 +48,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
-            ## What's Changed
-
-            This release includes the latest updates and improvements to the Custom Fields Block plugin.
-
-            ### Installation
-            1. Download the ZIP file below
-            2. Go to WordPress Admin → Plugins → Add New → Upload Plugin
-            3. Upload the ZIP file and activate the plugin
-
-            ### Changelog
-            - Bug fixes and improvements
-            - Enhanced typography options
-            - Better color management
-            - GitHub update system integration
+            Automated release for ${{ github.ref }}.
           draft: false
           prerelease: false
 
