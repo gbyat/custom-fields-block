@@ -1,3 +1,8 @@
+## 2025-06-24 21:19:59 - 1.1.3
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 21:19:58 - Fix Update URI and add cache clearing functions
 
 ### Changed Files:
