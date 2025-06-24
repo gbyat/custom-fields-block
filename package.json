@@ -20,7 +20,8 @@
     "package": "npm run build && powershell Compress-Archive -Path custom-fields-block.php,README.md,INSTALLATION.md,build,languages -DestinationPath custom-fields-block.zip -Force",
     "release:patch": "npm version patch && git push && git push --tags",
     "release:minor": "npm version minor && git push && git push --tags",
-    "release:major": "npm version major && git push && git push --tags"
+    "release:major": "npm version major && git push && git push --tags",
+    "version-sync": "node scripts/sync-version.js"
   },
   "keywords": [
     "wordpress",
