@@ -1,3 +1,8 @@
+## 2025-06-24 22:01:23 - 1.2.6
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 22:01:23 - Fix settings page to use WordPress Settings API properly
 
 ### Changed Files:
