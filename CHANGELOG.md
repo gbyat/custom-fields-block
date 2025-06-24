@@ -1,3 +1,9 @@
+## 2025-06-24 22:01:23 - Fix settings page to use WordPress Settings API properly
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 22:01:10 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
