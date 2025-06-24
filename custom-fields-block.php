@@ -607,16 +607,62 @@ class CustomFieldsBlock
 
         // Debug current status
         $current_version = CFB_VERSION;
-        $latest_release = $this->get_latest_release();
-        $latest_version = $latest_release ? $latest_release['version'] : 'Nicht verfügbar';
+        $github_token = get_option('cfb_github_token', '');
+
+        echo '<h3>Debug Information:</h3>';
+        echo '<p><strong>Aktuelle Version:</strong> ' . esc_html($current_version) . '</p>';
+        echo '<p><strong>GitHub Token gesetzt:</strong> ' . (!empty($github_token) ? 'Ja' : 'Nein') . '</p>';
+
+        // Test GitHub API connection
+        $api_url = 'https://api.github.com/repos/' . CFB_GITHUB_REPO . '/releases/latest';
+        $headers = array(
+            'User-Agent' => 'WordPress/' . get_bloginfo('version'),
+            'Accept' => 'application/vnd.github.v3+json'
+        );
+
+        if (!empty($github_token)) {
+            $headers['Authorization'] = 'token ' . $github_token;
+        }
+
+        $response = wp_remote_get($api_url, array(
+            'headers' => $headers,
+            'timeout' => 15
+        ));
+
+        if (is_wp_error($response)) {
+            echo '<p><strong>GitHub API Fehler:</strong> ' . esc_html($response->get_error_message()) . '</p>';
+        } else {
+            $response_code = wp_remote_retrieve_response_code($response);
+            echo '<p><strong>GitHub API Response Code:</strong> ' . esc_html($response_code) . '</p>';
+
+            if ($response_code === 200) {
+                $body = wp_remote_retrieve_body($response);
+                $release = json_decode($body, true);
+
+                if ($release) {
+                    echo '<p><strong>Neueste Version:</strong> ' . esc_html(ltrim($release['tag_name'], 'v')) . '</p>';
+                    echo '<p><strong>Release Name:</strong> ' . esc_html($release['name']) . '</p>';
+                    echo '<p><strong>Veröffentlicht:</strong> ' . esc_html($release['published_at']) . '</p>';
+
+                    // Check for ZIP asset
+                    $has_zip = false;
+                    foreach ($release['assets'] as $asset) {
+                        if ($asset['name'] === 'custom-fields-block.zip') {
+                            $has_zip = true;
+                            break;
+                        }
+                    }
+                    echo '<p><strong>ZIP Asset vorhanden:</strong> ' . ($has_zip ? 'Ja' : 'Nein') . '</p>';
+                } else {
+                    echo '<p><strong>GitHub API Fehler:</strong> Konnte Release-Daten nicht parsen</p>';
+                }
+            } else {
+                $body = wp_remote_retrieve_body($response);
+                echo '<p><strong>GitHub API Fehler:</strong> ' . esc_html($body) . '</p>';
+            }
+        }
 
     ?>
-        <p>
-            <strong>Aktuelle Version:</strong> <?php echo esc_html($current_version); ?><br>
-            <strong>Neueste Version:</strong> <?php echo esc_html($latest_version); ?><br>
-            <strong>Update verfügbar:</strong> <?php echo ($latest_release && version_compare($latest_version, $current_version, '>')) ? 'Ja' : 'Nein'; ?>
-        </p>
-
         <p>
         <form method="post" style="display: inline;">
             <?php wp_nonce_field('cfb_clear_cache', 'cfb_nonce'); ?>
