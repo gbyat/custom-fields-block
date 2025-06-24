@@ -1,6 +1,6 @@
 {
   "name": "custom-fields-block",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "WordPress plugin to display native custom fields as blocks with typography and color options",
   "main": "build/index.js",
   "scripts": {
