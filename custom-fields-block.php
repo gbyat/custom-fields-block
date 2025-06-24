@@ -292,26 +292,77 @@ class CustomFieldsBlock
      */
     private function get_custom_fields()
     {
-        global $post;
+        global $post, $wp_query;
 
-        if (!$post) {
-            return array();
-        }
-
-        $custom_fields = get_post_custom($post->ID);
         $fields = array();
 
-        foreach ($custom_fields as $key => $values) {
-            // Skip internal WordPress fields
-            if (strpos($key, '_') === 0) {
-                continue;
-            }
+        // Try to get post from different contexts
+        $current_post = null;
 
-            $fields[] = array(
-                'key' => $key,
-                'label' => $this->format_field_name($key),
-                'value' => is_array($values) ? $values[0] : $values,
-            );
+        // First try global $post
+        if ($post && is_object($post)) {
+            $current_post = $post;
+        }
+        // Then try from main query
+        elseif ($wp_query && $wp_query->is_single() && $wp_query->have_posts()) {
+            $current_post = $wp_query->post;
+        }
+        // Then try from current query
+        elseif (get_queried_object() && get_queried_object()->ID) {
+            $current_post = get_queried_object();
+        }
+
+        if ($current_post) {
+            $custom_fields = get_post_custom($current_post->ID);
+
+            foreach ($custom_fields as $key => $values) {
+                // Skip internal WordPress fields
+                if (strpos($key, '_') === 0) {
+                    continue;
+                }
+
+                $fields[] = array(
+                    'key' => $key,
+                    'label' => $this->format_field_name($key),
+                    'value' => is_array($values) ? $values[0] : $values,
+                );
+            }
+        }
+
+        // If no fields found, try to get some sample fields from recent posts
+        if (empty($fields)) {
+            $recent_posts = get_posts(array(
+                'numberposts' => 5,
+                'post_status' => 'publish'
+            ));
+
+            foreach ($recent_posts as $recent_post) {
+                $custom_fields = get_post_custom($recent_post->ID);
+
+                foreach ($custom_fields as $key => $values) {
+                    // Skip internal WordPress fields
+                    if (strpos($key, '_') === 0) {
+                        continue;
+                    }
+
+                    // Check if we already have this field
+                    $exists = false;
+                    foreach ($fields as $existing_field) {
+                        if ($existing_field['key'] === $key) {
+                            $exists = true;
+                            break;
+                        }
+                    }
+
+                    if (!$exists) {
+                        $fields[] = array(
+                            'key' => $key,
+                            'label' => $this->format_field_name($key) . ' (from recent posts)',
+                            'value' => is_array($values) ? $values[0] : $values,
+                        );
+                    }
+                }
+            }
         }
 
         return $fields;
