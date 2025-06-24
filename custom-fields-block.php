@@ -4,7 +4,7 @@
  * Plugin Name: Custom Fields Block
  * Plugin URI: https://github.com/your-username/custom-fields-block
  * Description: Fügt native WordPress Custom Fields als Blöcke mit Typografie- und Farboptionen ein
- * Version: 1.0.12
+ * Version: 1.0.13
  * Author: Your Name
  * License: GPL v2 or later
  * Text Domain: custom-fields-block
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('CFB_VERSION', '1.0.12');
+define('CFB_VERSION', '1.0.13');
 define('CFB_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CFB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CFB_GITHUB_REPO', 'gbyat/custom-fields-block');
