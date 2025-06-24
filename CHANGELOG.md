@@ -1,3 +1,8 @@
+## 2025-06-24 21:48:31 - 1.2.5
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 21:48:31 - Add detailed debug information for GitHub API
 
 ### Changed Files:
