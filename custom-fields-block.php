@@ -605,62 +605,68 @@ class CustomFieldsBlock
             echo '<div class="notice notice-success"><p>Update Cache wurde geleert!</p></div>';
         }
 
-        // Debug current status
-        $current_version = CFB_VERSION;
-        $github_token = get_option('cfb_github_token', '');
-
+        // Simple debug information
         echo '<h3>Debug Information:</h3>';
-        echo '<p><strong>Aktuelle Version:</strong> ' . esc_html($current_version) . '</p>';
+        echo '<p><strong>Aktuelle Version:</strong> ' . esc_html(CFB_VERSION) . '</p>';
+
+        $github_token = get_option('cfb_github_token', '');
         echo '<p><strong>GitHub Token gesetzt:</strong> ' . (!empty($github_token) ? 'Ja' : 'Nein') . '</p>';
 
-        // Test GitHub API connection
-        $api_url = 'https://api.github.com/repos/' . CFB_GITHUB_REPO . '/releases/latest';
-        $headers = array(
-            'User-Agent' => 'WordPress/' . get_bloginfo('version'),
-            'Accept' => 'application/vnd.github.v3+json'
-        );
+        // Test basic GitHub connection
+        echo '<p><strong>GitHub API Test:</strong> ';
 
-        if (!empty($github_token)) {
-            $headers['Authorization'] = 'token ' . $github_token;
-        }
+        try {
+            $api_url = 'https://api.github.com/repos/' . CFB_GITHUB_REPO . '/releases/latest';
+            $headers = array(
+                'User-Agent' => 'WordPress/' . get_bloginfo('version'),
+                'Accept' => 'application/vnd.github.v3+json'
+            );
 
-        $response = wp_remote_get($api_url, array(
-            'headers' => $headers,
-            'timeout' => 15
-        ));
-
-        if (is_wp_error($response)) {
-            echo '<p><strong>GitHub API Fehler:</strong> ' . esc_html($response->get_error_message()) . '</p>';
-        } else {
-            $response_code = wp_remote_retrieve_response_code($response);
-            echo '<p><strong>GitHub API Response Code:</strong> ' . esc_html($response_code) . '</p>';
-
-            if ($response_code === 200) {
-                $body = wp_remote_retrieve_body($response);
-                $release = json_decode($body, true);
-
-                if ($release) {
-                    echo '<p><strong>Neueste Version:</strong> ' . esc_html(ltrim($release['tag_name'], 'v')) . '</p>';
-                    echo '<p><strong>Release Name:</strong> ' . esc_html($release['name']) . '</p>';
-                    echo '<p><strong>Veröffentlicht:</strong> ' . esc_html($release['published_at']) . '</p>';
-
-                    // Check for ZIP asset
-                    $has_zip = false;
-                    foreach ($release['assets'] as $asset) {
-                        if ($asset['name'] === 'custom-fields-block.zip') {
-                            $has_zip = true;
-                            break;
-                        }
-                    }
-                    echo '<p><strong>ZIP Asset vorhanden:</strong> ' . ($has_zip ? 'Ja' : 'Nein') . '</p>';
-                } else {
-                    echo '<p><strong>GitHub API Fehler:</strong> Konnte Release-Daten nicht parsen</p>';
-                }
-            } else {
-                $body = wp_remote_retrieve_body($response);
-                echo '<p><strong>GitHub API Fehler:</strong> ' . esc_html($body) . '</p>';
+            if (!empty($github_token)) {
+                $headers['Authorization'] = 'token ' . $github_token;
             }
+
+            $response = wp_remote_get($api_url, array(
+                'headers' => $headers,
+                'timeout' => 15
+            ));
+
+            if (is_wp_error($response)) {
+                echo 'Fehler: ' . esc_html($response->get_error_message());
+            } else {
+                $response_code = wp_remote_retrieve_response_code($response);
+                echo 'Response Code: ' . esc_html($response_code);
+
+                if ($response_code === 200) {
+                    $body = wp_remote_retrieve_body($response);
+                    $release = json_decode($body, true);
+
+                    if ($release && isset($release['tag_name'])) {
+                        echo '<br><strong>Neueste Version:</strong> ' . esc_html(ltrim($release['tag_name'], 'v'));
+
+                        // Check for ZIP asset
+                        $has_zip = false;
+                        if (isset($release['assets']) && is_array($release['assets'])) {
+                            foreach ($release['assets'] as $asset) {
+                                if (isset($asset['name']) && $asset['name'] === 'custom-fields-block.zip') {
+                                    $has_zip = true;
+                                    break;
+                                }
+                            }
+                        }
+                        echo '<br><strong>ZIP Asset vorhanden:</strong> ' . ($has_zip ? 'Ja' : 'Nein');
+                    } else {
+                        echo '<br>Fehler: Release-Daten konnten nicht gelesen werden';
+                    }
+                } else {
+                    echo '<br>Fehler: API antwortet mit Code ' . esc_html($response_code);
+                }
+            }
+        } catch (Exception $e) {
+            echo 'Exception: ' . esc_html($e->getMessage());
         }
+
+        echo '</p>';
 
     ?>
         <p>
@@ -699,32 +705,11 @@ class CustomFieldsBlock
         <div class="wrap">
             <h1>Custom Fields Block Settings</h1>
 
-            <form method="post" action="">
-                <table class="form-table">
-                    <tr>
-                        <th scope="row">GitHub Personal Access Token</th>
-                        <td>
-                            <input type="text" name="cfb_github_token" value="<?php echo esc_attr($token); ?>" class="regular-text" />
-                            <p class="description">
-                                Optional: GitHub Personal Access Token für private Repositories oder höhere API-Limits.
-                                <a href="https://github.com/settings/tokens" target="_blank">Token erstellen</a>
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Repository</th>
-                        <td>
-                            <code><?php echo esc_html(CFB_GITHUB_REPO); ?></code>
-                            <p class="description">Your GitHub repository for plugin updates</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Current Version</th>
-                        <td>
-                            <code><?php echo esc_html(CFB_VERSION); ?></code>
-                        </td>
-                    </tr>
-                </table>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields('cfb_settings');
+                do_settings_sections('custom-fields-block-settings');
+                ?>
 
                 <p class="submit">
                     <input type="submit" name="submit" id="submit" class="button button-primary" value="Save Settings">
