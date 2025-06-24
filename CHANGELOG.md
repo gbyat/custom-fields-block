@@ -1,3 +1,8 @@
+## 2025-06-24 17:42:24 - 1.1.2
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-24 17:42:24 - Fix workflow: add version sync and package.json to release
 
 ### Changed Files:
