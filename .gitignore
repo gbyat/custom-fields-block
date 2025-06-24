@@ -69,4 +69,11 @@ jspm_packages/
 *.tgz
 
 # Yarn Integrity file
-.yarn-integrity 
+.yarn-integrity
+
+# Deployment- und Testskripte ignorieren
+/deploy-local.ps1
+/deploy-clean.ps1
+/deploy-remote.ps1
+/deploy-config.ps1
+/test.ps1 
