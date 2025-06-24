@@ -1,3 +1,9 @@
+## 2025-06-24 17:31:04 - Update workflow to auto-publish releases
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 17:30:44 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
