@@ -43,6 +43,13 @@ class CustomFieldsBlock
         // Admin settings
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'init_settings'));
+
+        // Cache management
+        add_action('save_post', array($this, 'clear_custom_fields_cache'));
+        add_action('deleted_post', array($this, 'clear_custom_fields_cache'));
+        add_action('updated_post_meta', array($this, 'clear_custom_fields_cache'));
+        add_action('added_post_meta', array($this, 'clear_custom_fields_cache'));
+        add_action('deleted_post_meta', array($this, 'clear_custom_fields_cache'));
     }
 
     /**
@@ -292,80 +299,83 @@ class CustomFieldsBlock
      */
     private function get_custom_fields()
     {
-        global $post, $wp_query;
+        // Try to get cached custom fields first
+        $cached_fields = get_transient('cfb_all_custom_fields');
+
+        if ($cached_fields !== false) {
+            return $cached_fields;
+        }
+
+        // If no cache, build it
+        $fields = $this->build_custom_fields_cache();
+
+        // Cache for 1 hour
+        set_transient('cfb_all_custom_fields', $fields, 3600);
+
+        return $fields;
+    }
+
+    /**
+     * Build cache of all custom fields from the site
+     */
+    private function build_custom_fields_cache()
+    {
+        global $wpdb;
 
         $fields = array();
+        $field_keys = array();
 
-        // Try to get post from different contexts
-        $current_post = null;
+        // Get all custom field keys from the database
+        $meta_keys = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT meta_key 
+                FROM {$wpdb->postmeta} 
+                WHERE meta_key NOT LIKE %s 
+                AND meta_key NOT LIKE %s
+                ORDER BY meta_key",
+                '_%', // Skip internal WordPress fields
+                'field_%' // Skip ACF internal fields
+            )
+        );
 
-        // First try global $post
-        if ($post && is_object($post)) {
-            $current_post = $post;
+        if (empty($meta_keys)) {
+            return array();
         }
-        // Then try from main query
-        elseif ($wp_query && $wp_query->is_single() && $wp_query->have_posts()) {
-            $current_post = $wp_query->post;
-        }
-        // Then try from current query
-        elseif (get_queried_object() && get_queried_object()->ID) {
-            $current_post = get_queried_object();
-        }
 
-        if ($current_post) {
-            $custom_fields = get_post_custom($current_post->ID);
+        // Get sample values for each field
+        foreach ($meta_keys as $meta_key) {
+            // Get a sample value from the most recent post with this field
+            $sample_value = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT meta_value 
+                    FROM {$wpdb->postmeta} pm
+                    JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                    WHERE pm.meta_key = %s 
+                    AND p.post_status = 'publish'
+                    ORDER BY p.post_date DESC
+                    LIMIT 1",
+                    $meta_key
+                )
+            );
 
-            foreach ($custom_fields as $key => $values) {
-                // Skip internal WordPress fields
-                if (strpos($key, '_') === 0) {
-                    continue;
-                }
-
+            if ($sample_value) {
                 $fields[] = array(
-                    'key' => $key,
-                    'label' => $this->format_field_name($key),
-                    'value' => is_array($values) ? $values[0] : $values,
+                    'key' => $meta_key,
+                    'label' => $this->format_field_name($meta_key),
+                    'value' => $sample_value,
                 );
             }
         }
 
-        // If no fields found, try to get some sample fields from recent posts
-        if (empty($fields)) {
-            $recent_posts = get_posts(array(
-                'numberposts' => 5,
-                'post_status' => 'publish'
-            ));
-
-            foreach ($recent_posts as $recent_post) {
-                $custom_fields = get_post_custom($recent_post->ID);
-
-                foreach ($custom_fields as $key => $values) {
-                    // Skip internal WordPress fields
-                    if (strpos($key, '_') === 0) {
-                        continue;
-                    }
-
-                    // Check if we already have this field
-                    $exists = false;
-                    foreach ($fields as $existing_field) {
-                        if ($existing_field['key'] === $key) {
-                            $exists = true;
-                            break;
-                        }
-                    }
-
-                    if (!$exists) {
-                        $fields[] = array(
-                            'key' => $key,
-                            'label' => $this->format_field_name($key) . ' (from recent posts)',
-                            'value' => is_array($values) ? $values[0] : $values,
-                        );
-                    }
-                }
-            }
-        }
-
         return $fields;
+    }
+
+    /**
+     * Clear custom fields cache
+     */
+    public function clear_custom_fields_cache()
+    {
+        delete_transient('cfb_all_custom_fields');
     }
 
     /**
@@ -514,6 +524,21 @@ class CustomFieldsBlock
             'custom-fields-block-settings',
             'cfb_github_section'
         );
+
+        add_settings_section(
+            'cfb_cache_section',
+            'Cache Management',
+            array($this, 'cache_section_callback'),
+            'custom-fields-block-settings'
+        );
+
+        add_settings_field(
+            'cfb_clear_cache',
+            'Clear Cache',
+            array($this, 'cache_clear_callback'),
+            'custom-fields-block-settings',
+            'cfb_cache_section'
+        );
     }
 
     /**
@@ -533,20 +558,46 @@ class CustomFieldsBlock
     }
 
     /**
-     * GitHub token field callback
+     * GitHub token callback
      */
     public function github_token_callback()
     {
         $token = get_option('cfb_github_token', '');
-        $masked_token = !empty($token) ? str_repeat('*', strlen($token) - 4) . substr($token, -4) : '';
+?>
+        <input type="text" id="cfb_github_token" name="cfb_github_token" value="<?php echo esc_attr($token); ?>" class="regular-text" />
+        <p class="description">
+            Optional: GitHub Personal Access Token für private Repositories oder höhere API-Limits.
+            <a href="https://github.com/settings/tokens" target="_blank">Token erstellen</a>
+        </p>
+    <?php
+    }
 
-        echo '<input type="password" id="cfb_github_token" name="cfb_github_token" value="' . esc_attr($token) . '" class="regular-text" />';
-        echo '<p class="description">Enter your GitHub Personal Access Token for private repository access.</p>';
+    /**
+     * Cache management section callback
+     */
+    public function cache_section_callback()
+    {
+        echo '<p>Verwaltung des Custom Fields Cache für bessere Performance.</p>';
+    }
 
-        if (!empty($token)) {
-            echo '<p><strong>Current token:</strong> ' . esc_html($masked_token) . '</p>';
-            echo '<p><a href="#" onclick="document.getElementById(\'cfb_github_token\').value=\'\'; return false;">Clear token</a></p>';
+    /**
+     * Cache clear callback
+     */
+    public function cache_clear_callback()
+    {
+        if (isset($_POST['cfb_clear_cache']) && wp_verify_nonce($_POST['cfb_nonce'], 'cfb_clear_cache')) {
+            $this->clear_custom_fields_cache();
+            echo '<div class="notice notice-success"><p>Custom Fields Cache wurde geleert!</p></div>';
         }
+    ?>
+        <p>
+        <form method="post">
+            <?php wp_nonce_field('cfb_clear_cache', 'cfb_nonce'); ?>
+            <input type="submit" name="cfb_clear_cache" class="button button-secondary" value="Cache leeren" />
+            <span class="description">Leert den Cache und lädt alle Custom Fields neu.</span>
+        </form>
+        </p>
+    <?php
     }
 
     /**
@@ -563,7 +614,7 @@ class CustomFieldsBlock
         }
 
         $token = get_option('cfb_github_token', '');
-?>
+    ?>
         <div class="wrap">
             <h1>Custom Fields Block Settings</h1>
 
@@ -572,14 +623,11 @@ class CustomFieldsBlock
                     <tr>
                         <th scope="row">GitHub Personal Access Token</th>
                         <td>
-                            <input type="password" name="cfb_github_token" value="<?php echo esc_attr($token); ?>" class="regular-text" />
+                            <input type="text" name="cfb_github_token" value="<?php echo esc_attr($token); ?>" class="regular-text" />
                             <p class="description">
-                                Required for automatic updates from private GitHub repository.
-                                <a href="https://github.com/settings/tokens" target="_blank">Create token here</a>
+                                Optional: GitHub Personal Access Token für private Repositories oder höhere API-Limits.
+                                <a href="https://github.com/settings/tokens" target="_blank">Token erstellen</a>
                             </p>
-                            <?php if (!empty($token)): ?>
-                                <p><strong>Current token:</strong> <?php echo esc_html(str_repeat('*', strlen($token) - 4) . substr($token, -4)); ?></p>
-                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
