@@ -1,3 +1,8 @@
+## 2025-06-25 08:39:46 - 1.2.13
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-25 08:39:45 - Refactor admin menu handling by adding a method to remove the old menu before adding the new one, preventing conflicts in the Custom Fields Block settings.
 
 ### Changed Files:
