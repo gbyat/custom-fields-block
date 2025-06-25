@@ -1,3 +1,9 @@
+## 2025-06-25 08:43:25 - Add enhanced debug information with version comparison and API testing
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-25 08:43:15 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
