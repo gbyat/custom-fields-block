@@ -340,20 +340,39 @@ class CustomFieldsBlock
         $fields = array();
         $field_keys = array();
 
-        // Get all custom field keys from the database
+        // Get all custom field keys from the database - less restrictive
         $meta_keys = $wpdb->get_col(
             $wpdb->prepare(
                 "SELECT DISTINCT meta_key 
                 FROM {$wpdb->postmeta} 
                 WHERE meta_key NOT LIKE %s 
                 AND meta_key NOT LIKE %s
+                AND meta_key NOT LIKE %s
+                AND meta_key NOT LIKE %s
                 ORDER BY meta_key",
-                '_%', // Skip internal WordPress fields
-                'field_%' // Skip ACF internal fields
+                '_edit_%', // Skip edit lock fields
+                '_wp_%', // Skip WordPress internal fields
+                'field_%', // Skip ACF internal fields
+                '_thumbnail_id' // Skip featured image
             )
         );
 
+        // Debug: Log what we found
+        error_log('Custom Fields Block Debug: Found ' . count($meta_keys) . ' meta keys: ' . print_r($meta_keys, true));
+
         if (empty($meta_keys)) {
+            // Try even less restrictive query
+            $meta_keys = $wpdb->get_col(
+                "SELECT DISTINCT meta_key 
+                FROM {$wpdb->postmeta} 
+                WHERE meta_key NOT LIKE '_edit_%'
+                ORDER BY meta_key"
+            );
+            error_log('Custom Fields Block Debug: Less restrictive query found ' . count($meta_keys) . ' meta keys');
+        }
+
+        if (empty($meta_keys)) {
+            error_log('Custom Fields Block Debug: No meta keys found at all');
             return array();
         }
 
@@ -373,6 +392,20 @@ class CustomFieldsBlock
                 )
             );
 
+            // Also try without post status restriction
+            if (!$sample_value) {
+                $sample_value = $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT meta_value 
+                        FROM {$wpdb->postmeta} 
+                        WHERE meta_key = %s 
+                        ORDER BY meta_id DESC
+                        LIMIT 1",
+                        $meta_key
+                    )
+                );
+            }
+
             if ($sample_value) {
                 $fields[] = array(
                     'key' => $meta_key,
@@ -382,6 +415,7 @@ class CustomFieldsBlock
             }
         }
 
+        error_log('Custom Fields Block Debug: Final fields array: ' . print_r($fields, true));
         return $fields;
     }
 
@@ -392,16 +426,12 @@ class CustomFieldsBlock
     {
         global $wpdb;
 
-        // Get some sample custom fields from recent posts
+        error_log('Custom Fields Block Debug: Using fallback method');
+
+        // Method 1: Get from recent posts with custom fields
         $recent_posts = get_posts(array(
-            'numberposts' => 10,
+            'numberposts' => 20,
             'post_status' => 'publish',
-            'meta_query' => array(
-                array(
-                    'key' => '_',
-                    'compare' => 'NOT LIKE'
-                )
-            )
         ));
 
         $fields = array();
@@ -422,14 +452,46 @@ class CustomFieldsBlock
                 }
 
                 $seen_keys[] = $key;
+                $value = is_array($values) ? $values[0] : $values;
+
                 $fields[] = array(
                     'key' => $key,
                     'label' => $this->format_field_name($key) . ' (from post: ' . $post->post_title . ')',
-                    'value' => is_array($values) ? $values[0] : $values,
+                    'value' => $value,
                 );
             }
         }
 
+        // Method 2: Direct database query if still no fields
+        if (empty($fields)) {
+            error_log('Custom Fields Block Debug: Trying direct database query');
+
+            $meta_keys = $wpdb->get_col(
+                "SELECT DISTINCT meta_key 
+                FROM {$wpdb->postmeta} 
+                WHERE meta_key NOT LIKE '_%'
+                LIMIT 50"
+            );
+
+            foreach ($meta_keys as $meta_key) {
+                $sample_value = $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s LIMIT 1",
+                        $meta_key
+                    )
+                );
+
+                if ($sample_value) {
+                    $fields[] = array(
+                        'key' => $meta_key,
+                        'label' => $this->format_field_name($meta_key),
+                        'value' => $sample_value,
+                    );
+                }
+            }
+        }
+
+        error_log('Custom Fields Block Debug: Fallback found ' . count($fields) . ' fields');
         return $fields;
     }
 
@@ -558,11 +620,11 @@ class CustomFieldsBlock
     public function add_admin_menu()
     {
         add_options_page(
-            'Custom Fields Block Settings',
+            'Custom Fields Block',
             'Custom Fields Block',
             'manage_options',
-            'custom-fields-block-settings',
-            array($this, 'settings_page')
+            'custom-fields-block',
+            array($this, 'admin_page')
         );
     }
 
@@ -572,35 +634,24 @@ class CustomFieldsBlock
     public function init_settings()
     {
         register_setting('cfb_settings', 'cfb_github_token');
+        register_setting('cfb_settings', 'cfb_custom_fields_cache', array(
+            'type' => 'array',
+            'default' => array()
+        ));
 
         add_settings_section(
             'cfb_github_section',
             'GitHub Update Settings',
             array($this, 'github_section_callback'),
-            'custom-fields-block-settings'
+            'cfb_settings'
         );
 
         add_settings_field(
             'cfb_github_token',
             'GitHub Personal Access Token',
             array($this, 'github_token_callback'),
-            'custom-fields-block-settings',
+            'cfb_settings',
             'cfb_github_section'
-        );
-
-        add_settings_section(
-            'cfb_cache_section',
-            'Cache Management',
-            array($this, 'cache_section_callback'),
-            'custom-fields-block-settings'
-        );
-
-        add_settings_field(
-            'cfb_clear_cache',
-            'Clear Cache',
-            array($this, 'cache_clear_callback'),
-            'custom-fields-block-settings',
-            'cfb_cache_section'
         );
     }
 
@@ -609,15 +660,7 @@ class CustomFieldsBlock
      */
     public function github_section_callback()
     {
-        echo '<p>Configure GitHub settings for automatic plugin updates from your private repository.</p>';
-        echo '<p><strong>How to get a GitHub Token:</strong></p>';
-        echo '<ol>';
-        echo '<li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings → Developer settings → Personal access tokens</a></li>';
-        echo '<li>Click "Generate new token (classic)"</li>';
-        echo '<li>Give it a name like "WordPress Plugin Updates"</li>';
-        echo '<li>Select scopes: <code>repo</code> and <code>workflow</code></li>';
-        echo '<li>Generate and copy the token</li>';
-        echo '</ol>';
+        echo '<p>Configure GitHub integration for automatic plugin updates.</p>';
     }
 
     /**
@@ -625,177 +668,283 @@ class CustomFieldsBlock
      */
     public function github_token_callback()
     {
-        $token = get_option('cfb_github_token', '');
+        $token = get_option('cfb_github_token');
+        echo '<input type="password" name="cfb_github_token" value="' . esc_attr($token) . '" class="regular-text" />';
+        echo '<p class="description">Enter your GitHub Personal Access Token for automatic updates.</p>';
+    }
+
+    /**
+     * Main admin page with tabs
+     */
+    public function admin_page()
+    {
+        $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'custom-fields';
+
+        // Handle form submissions
+        if (isset($_POST['action'])) {
+            switch ($_POST['action']) {
+                case 'scan_custom_fields':
+                    $this->scan_custom_fields();
+                    break;
+                case 'clear_cache':
+                    $this->clear_custom_fields_cache();
+                    break;
+                case 'save_settings':
+                    $this->save_settings();
+                    break;
+            }
+        }
 ?>
-        <input type="text" id="cfb_github_token" name="cfb_github_token" value="<?php echo esc_attr($token); ?>" class="regular-text" />
-        <p class="description">
-            Optional: GitHub Personal Access Token für private Repositories oder höhere API-Limits.
-            <a href="https://github.com/settings/tokens" target="_blank">Token erstellen</a>
-        </p>
-    <?php
-    }
-
-    /**
-     * Cache management section callback
-     */
-    public function cache_section_callback()
-    {
-        echo '<p>Verwaltung des Custom Fields Cache für bessere Performance.</p>';
-    }
-
-    /**
-     * Cache clear callback
-     */
-    public function cache_clear_callback()
-    {
-        if (isset($_POST['cfb_clear_cache']) && wp_verify_nonce($_POST['cfb_nonce'], 'cfb_clear_cache')) {
-            $this->clear_custom_fields_cache();
-            echo '<div class="notice notice-success"><p>Custom Fields Cache wurde geleert!</p></div>';
-        }
-
-        if (isset($_POST['cfb_clear_update_cache']) && wp_verify_nonce($_POST['cfb_nonce'], 'cfb_clear_update_cache')) {
-            $this->clear_update_cache();
-            echo '<div class="notice notice-success"><p>Update Cache wurde geleert!</p></div>';
-        }
-
-        // Simple debug information
-        echo '<h3>Debug Information:</h3>';
-        echo '<p><strong>Aktuelle Version:</strong> ' . esc_html(CFB_VERSION) . '</p>';
-
-        $github_token = get_option('cfb_github_token', '');
-        echo '<p><strong>GitHub Token gesetzt:</strong> ' . (!empty($github_token) ? 'Ja' : 'Nein') . '</p>';
-
-        // Test basic GitHub connection
-        echo '<p><strong>GitHub API Test:</strong> ';
-
-        try {
-            $api_url = 'https://api.github.com/repos/' . CFB_GITHUB_REPO . '/releases/latest';
-            $headers = array(
-                'User-Agent' => 'WordPress/' . get_bloginfo('version'),
-                'Accept' => 'application/vnd.github.v3+json'
-            );
-
-            if (!empty($github_token)) {
-                $headers['Authorization'] = 'token ' . $github_token;
-            }
-
-            $response = wp_remote_get($api_url, array(
-                'headers' => $headers,
-                'timeout' => 15
-            ));
-
-            if (is_wp_error($response)) {
-                echo 'Fehler: ' . esc_html($response->get_error_message());
-            } else {
-                $response_code = wp_remote_retrieve_response_code($response);
-                echo 'Response Code: ' . esc_html($response_code);
-
-                if ($response_code === 200) {
-                    $body = wp_remote_retrieve_body($response);
-                    $release = json_decode($body, true);
-
-                    if ($release && isset($release['tag_name'])) {
-                        echo '<br><strong>Neueste Version:</strong> ' . esc_html(ltrim($release['tag_name'], 'v'));
-
-                        // Check for ZIP asset
-                        $has_zip = false;
-                        if (isset($release['assets']) && is_array($release['assets'])) {
-                            foreach ($release['assets'] as $asset) {
-                                if (isset($asset['name']) && $asset['name'] === 'custom-fields-block.zip') {
-                                    $has_zip = true;
-                                    break;
-                                }
-                            }
-                        }
-                        echo '<br><strong>ZIP Asset vorhanden:</strong> ' . ($has_zip ? 'Ja' : 'Nein');
-                    } else {
-                        echo '<br>Fehler: Release-Daten konnten nicht gelesen werden';
-                    }
-                } else {
-                    echo '<br>Fehler: API antwortet mit Code ' . esc_html($response_code);
-                }
-            }
-        } catch (Exception $e) {
-            echo 'Exception: ' . esc_html($e->getMessage());
-        }
-
-        echo '</p>';
-
-    ?>
-        <p>
-        <form method="post" style="display: inline;">
-            <?php wp_nonce_field('cfb_clear_cache', 'cfb_nonce'); ?>
-            <input type="submit" name="cfb_clear_cache" class="button button-secondary" value="Custom Fields Cache leeren" />
-            <span class="description">Leert den Custom Fields Cache.</span>
-        </form>
-        </p>
-
-        <p>
-        <form method="post" style="display: inline;">
-            <?php wp_nonce_field('cfb_clear_update_cache', 'cfb_nonce'); ?>
-            <input type="submit" name="cfb_clear_update_cache" class="button button-secondary" value="Update Cache leeren" />
-            <span class="description">Leert den Update Cache und erzwingt eine neue Prüfung.</span>
-        </form>
-        </p>
-    <?php
-    }
-
-    /**
-     * Settings page
-     */
-    public function settings_page()
-    {
-        if (isset($_POST['submit'])) {
-            update_option('cfb_github_token', sanitize_text_field($_POST['cfb_github_token']));
-            echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
-
-            // Clear update cache
-            delete_transient('cfb_latest_release');
-        }
-
-        $token = get_option('cfb_github_token', '');
-    ?>
         <div class="wrap">
-            <h1>Custom Fields Block Settings</h1>
+            <h1>Custom Fields Block</h1>
 
-            <form method="post" action="options.php">
+            <nav class="nav-tab-wrapper">
+                <a href="?page=custom-fields-block&tab=custom-fields"
+                    class="nav-tab <?php echo $active_tab === 'custom-fields' ? 'nav-tab-active' : ''; ?>">
+                    Custom Fields Manager
+                </a>
+                <a href="?page=custom-fields-block&tab=settings"
+                    class="nav-tab <?php echo $active_tab === 'settings' ? 'nav-tab-active' : ''; ?>">
+                    Settings
+                </a>
+                <a href="?page=custom-fields-block&tab=debug"
+                    class="nav-tab <?php echo $active_tab === 'debug' ? 'nav-tab-active' : ''; ?>">
+                    Debug Info
+                </a>
+            </nav>
+
+            <div class="tab-content">
                 <?php
-                settings_fields('cfb_settings');
-                do_settings_sections('custom-fields-block-settings');
+                switch ($active_tab) {
+                    case 'custom-fields':
+                        $this->custom_fields_tab();
+                        break;
+                    case 'settings':
+                        $this->settings_tab();
+                        break;
+                    case 'debug':
+                        $this->debug_tab();
+                        break;
+                }
                 ?>
-
-                <p class="submit">
-                    <input type="submit" name="submit" id="submit" class="button button-primary" value="Save Settings">
-                    <a href="<?php echo admin_url('plugins.php'); ?>" class="button">Back to Plugins</a>
-                </p>
-            </form>
-
-            <h2>Test Update Check</h2>
-            <p>Click the button below to manually check for updates:</p>
-            <a href="<?php echo admin_url('update-core.php'); ?>" class="button">Check for Updates</a>
-
-            <h2>Help</h2>
-            <div class="card">
-                <h3>How to get a GitHub Token:</h3>
-                <ol>
-                    <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings → Developer settings → Personal access tokens</a></li>
-                    <li>Click "Generate new token (classic)"</li>
-                    <li>Give it a name like "WordPress Plugin Updates"</li>
-                    <li>Select scopes: <code>repo</code> and <code>workflow</code></li>
-                    <li>Generate and copy the token</li>
-                    <li>Paste it in the field above and save</li>
-                </ol>
-
-                <h3>Creating a Release:</h3>
-                <ol>
-                    <li>Make your changes and commit them</li>
-                    <li>Run: <code>npm run release:patch</code> (or minor/major)</li>
-                    <li>GitHub will automatically create a release with the plugin ZIP</li>
-                    <li>WordPress will detect the update and show it in the admin</li>
-                </ol>
             </div>
         </div>
+    <?php
+    }
+
+    /**
+     * Custom Fields tab
+     */
+    private function custom_fields_tab()
+    {
+        $custom_fields = $this->get_custom_fields();
+    ?>
+        <div class="tab-pane">
+            <h2>Custom Fields Manager</h2>
+
+            <div class="cfb-actions">
+                <form method="post" style="display: inline;">
+                    <input type="hidden" name="action" value="scan_custom_fields">
+                    <?php wp_nonce_field('cfb_scan_fields', 'cfb_nonce'); ?>
+                    <button type="submit" class="button button-primary">
+                        🔍 Scan Custom Fields
+                    </button>
+                </form>
+
+                <form method="post" style="display: inline; margin-left: 10px;">
+                    <input type="hidden" name="action" value="clear_cache">
+                    <?php wp_nonce_field('cfb_clear_cache', 'cfb_nonce'); ?>
+                    <button type="submit" class="button button-secondary">
+                        🗑️ Clear Cache
+                    </button>
+                </form>
+            </div>
+
+            <div class="cfb-stats">
+                <p><strong>Found <?php echo count($custom_fields); ?> custom fields</strong></p>
+            </div>
+
+            <?php if (!empty($custom_fields)): ?>
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
+                        <tr>
+                            <th>Field Key</th>
+                            <th>Display Name</th>
+                            <th>Sample Value</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($custom_fields as $field): ?>
+                            <tr>
+                                <td><code><?php echo esc_html($field['key']); ?></code></td>
+                                <td><?php echo esc_html($field['label']); ?></td>
+                                <td>
+                                    <span class="cfb-sample-value">
+                                        <?php echo esc_html(substr($field['value'], 0, 50)); ?>
+                                        <?php if (strlen($field['value']) > 50): ?>...<?php endif; ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="button button-small" onclick="copyToClipboard('<?php echo esc_js($field['key']); ?>')">
+                                        Copy Key
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <div class="notice notice-warning">
+                    <p>No custom fields found. Click "Scan Custom Fields" to search for custom fields in your posts.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <script>
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(function() {
+                    alert('Field key copied to clipboard: ' + text);
+                });
+            }
+        </script>
+    <?php
+    }
+
+    /**
+     * Settings tab
+     */
+    private function settings_tab()
+    {
+    ?>
+        <div class="tab-pane">
+            <h2>Settings</h2>
+
+            <form method="post">
+                <input type="hidden" name="action" value="save_settings">
+                <?php wp_nonce_field('cfb_save_settings', 'cfb_nonce'); ?>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">GitHub Token</th>
+                        <td>
+                            <input type="password" name="cfb_github_token"
+                                value="<?php echo esc_attr(get_option('cfb_github_token')); ?>"
+                                class="regular-text" />
+                            <p class="description">Personal Access Token for automatic plugin updates</p>
+                        </td>
+                    </tr>
+                </table>
+
+                <?php submit_button('Save Settings'); ?>
+            </form>
+        </div>
+    <?php
+    }
+
+    /**
+     * Debug tab
+     */
+    private function debug_tab()
+    {
+        $latest_release = $this->get_latest_release();
+        $custom_fields = $this->get_custom_fields();
+    ?>
+        <div class="tab-pane">
+            <h2>Debug Information</h2>
+
+            <h3>Update System</h3>
+            <table class="form-table">
+                <tr>
+                    <th>GitHub Token</th>
+                    <td><?php echo get_option('cfb_github_token') ? '✅ Set' : '❌ Not set'; ?></td>
+                </tr>
+                <tr>
+                    <th>Latest Release</th>
+                    <td>
+                        <?php if ($latest_release): ?>
+                            ✅ <?php echo esc_html($latest_release['tag_name']); ?>
+                        <?php else: ?>
+                            ❌ Could not fetch latest release
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Current Version</th>
+                    <td><?php echo CFB_VERSION; ?></td>
+                </tr>
+            </table>
+
+            <h3>Custom Fields Cache</h3>
+            <table class="form-table">
+                <tr>
+                    <th>Cached Fields</th>
+                    <td><?php echo count($custom_fields); ?></td>
+                </tr>
+                <tr>
+                    <th>Cache Status</th>
+                    <td><?php echo get_transient('cfb_all_custom_fields') ? '✅ Active' : '❌ Empty'; ?></td>
+                </tr>
+            </table>
+
+            <h3>System Information</h3>
+            <table class="form-table">
+                <tr>
+                    <th>WordPress Version</th>
+                    <td><?php echo get_bloginfo('version'); ?></td>
+                </tr>
+                <tr>
+                    <th>PHP Version</th>
+                    <td><?php echo PHP_VERSION; ?></td>
+                </tr>
+                <tr>
+                    <th>Plugin Directory</th>
+                    <td><?php echo CFB_PLUGIN_DIR; ?></td>
+                </tr>
+            </table>
+        </div>
 <?php
+    }
+
+    /**
+     * Scan custom fields
+     */
+    private function scan_custom_fields()
+    {
+        if (!wp_verify_nonce($_POST['cfb_nonce'], 'cfb_scan_fields')) {
+            wp_die('Security check failed');
+        }
+
+        // Clear existing cache
+        $this->clear_custom_fields_cache();
+
+        // Force new scan
+        $fields = $this->build_custom_fields_cache();
+
+        // Cache the results
+        set_transient('cfb_all_custom_fields', $fields, 3600);
+
+        add_action('admin_notices', function () use ($fields) {
+            echo '<div class="notice notice-success"><p>Found ' . count($fields) . ' custom fields!</p></div>';
+        });
+    }
+
+    /**
+     * Save settings
+     */
+    private function save_settings()
+    {
+        if (!wp_verify_nonce($_POST['cfb_nonce'], 'cfb_save_settings')) {
+            wp_die('Security check failed');
+        }
+
+        if (isset($_POST['cfb_github_token'])) {
+            update_option('cfb_github_token', sanitize_text_field($_POST['cfb_github_token']));
+        }
+
+        add_action('admin_notices', function () {
+            echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
+        });
     }
 }
 

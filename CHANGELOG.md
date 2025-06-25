@@ -1,3 +1,8 @@
+## 2025-06-25 08:36:51 - Remove obsolete release-alt.yml workflow
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-25 08:29:44 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
