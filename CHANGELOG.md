@@ -1,3 +1,8 @@
+## 2025-06-25 08:07:37 - 1.2.8
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-25 08:07:37 - Enhance custom fields caching with fallback mechanism and update release notes in workflow
 
 ### Changed Files:
