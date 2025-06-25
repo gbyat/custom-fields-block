@@ -1,3 +1,9 @@
+## 2025-06-25 08:39:45 - Refactor admin menu handling by adding a method to remove the old menu before adding the new one, preventing conflicts in the Custom Fields Block settings.
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-25 08:39:33 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
