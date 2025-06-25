@@ -1,3 +1,8 @@
+## 2025-06-25 08:43:25 - 1.2.14
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-25 08:43:25 - Add enhanced debug information with version comparison and API testing
 
 ### Changed Files:
