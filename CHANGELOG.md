@@ -1,3 +1,8 @@
+## 2025-06-25 08:26:42 - 1.2.11
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-25 08:26:41 - Fix GitHub API error handling in asset deletion
 
 ### Changed Files:
