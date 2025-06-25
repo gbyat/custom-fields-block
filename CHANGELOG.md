@@ -1,3 +1,8 @@
+## 2025-06-25 09:13:47 - 1.2.15
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-25 09:13:47 - Add heading level selection (H1-H6) for custom field blocks
 
 ### Changed Files:
