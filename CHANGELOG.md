@@ -1,3 +1,9 @@
+## 2025-06-25 08:11:17 - Update release workflow to verify version sync before building plugin
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-25 08:10:57 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
