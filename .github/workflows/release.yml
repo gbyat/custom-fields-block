@@ -71,5 +71,28 @@ jobs:
           generate_release_notes: true
           draft: false
           prerelease: false
+          body: |
+            ## Changelog
+
+            ### Version ${{ github.ref_name }}
+
+            - Verbesserte Debug-Funktionen für Update-System
+            - Korrigierte Einstellungsseite mit WordPress Settings API
+            - Zentrales Custom Fields Caching-System
+            - Dropdown direkt im Block integriert
+            - Automatische Cache-Verwaltung
+
+            ### Installation
+
+            1. Deaktiviere das aktuelle Plugin
+            2. Lade die ZIP-Datei hoch
+            3. Aktiviere das Plugin wieder
+
+            ### Bekannte Probleme
+
+            Falls das Update fehlschlägt:
+            1. Gehe zu Einstellungen → Custom Fields Block
+            2. Klicke "Update Cache leeren"
+            3. Versuche das Update erneut
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}

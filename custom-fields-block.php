@@ -312,15 +312,20 @@ class CustomFieldsBlock
         // Try to get cached custom fields first
         $cached_fields = get_transient('cfb_all_custom_fields');
 
-        if ($cached_fields !== false) {
+        if ($cached_fields !== false && !empty($cached_fields)) {
             return $cached_fields;
         }
 
-        // If no cache, build it
+        // If no cache or empty cache, build it
         $fields = $this->build_custom_fields_cache();
 
         // Cache for 1 hour
         set_transient('cfb_all_custom_fields', $fields, 3600);
+
+        // If still no fields, try a simple fallback
+        if (empty($fields)) {
+            $fields = $this->get_fallback_custom_fields();
+        }
 
         return $fields;
     }
@@ -373,6 +378,54 @@ class CustomFieldsBlock
                     'key' => $meta_key,
                     'label' => $this->format_field_name($meta_key),
                     'value' => $sample_value,
+                );
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Fallback method to get custom fields if cache is empty
+     */
+    private function get_fallback_custom_fields()
+    {
+        global $wpdb;
+
+        // Get some sample custom fields from recent posts
+        $recent_posts = get_posts(array(
+            'numberposts' => 10,
+            'post_status' => 'publish',
+            'meta_query' => array(
+                array(
+                    'key' => '_',
+                    'compare' => 'NOT LIKE'
+                )
+            )
+        ));
+
+        $fields = array();
+        $seen_keys = array();
+
+        foreach ($recent_posts as $post) {
+            $custom_fields = get_post_custom($post->ID);
+
+            foreach ($custom_fields as $key => $values) {
+                // Skip internal WordPress fields
+                if (strpos($key, '_') === 0) {
+                    continue;
+                }
+
+                // Skip if we already have this field
+                if (in_array($key, $seen_keys)) {
+                    continue;
+                }
+
+                $seen_keys[] = $key;
+                $fields[] = array(
+                    'key' => $key,
+                    'label' => $this->format_field_name($key) . ' (from post: ' . $post->post_title . ')',
+                    'value' => is_array($values) ? $values[0] : $values,
                 );
             }
         }
