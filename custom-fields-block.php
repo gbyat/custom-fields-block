@@ -698,6 +698,9 @@ class CustomFieldsBlock
                 case 'clear_cache':
                     $this->clear_custom_fields_cache();
                     break;
+                case 'clear_update_cache':
+                    $this->clear_update_cache();
+                    break;
                 case 'save_settings':
                     $this->save_settings();
                     break;
@@ -858,6 +861,7 @@ class CustomFieldsBlock
     {
         $latest_release = $this->get_latest_release();
         $custom_fields = $this->get_custom_fields();
+        $github_token = get_option('cfb_github_token');
     ?>
         <div class="tab-pane">
             <h2>Debug Information</h2>
@@ -865,22 +869,90 @@ class CustomFieldsBlock
             <h3>Update System</h3>
             <table class="form-table">
                 <tr>
-                    <th>GitHub Token</th>
-                    <td><?php echo get_option('cfb_github_token') ? '✅ Set' : '❌ Not set'; ?></td>
+                    <th>Current Version</th>
+                    <td><strong><?php echo CFB_VERSION; ?></strong></td>
                 </tr>
                 <tr>
-                    <th>Latest Release</th>
+                    <th>Latest Version</th>
                     <td>
                         <?php if ($latest_release): ?>
-                            ✅ <?php echo esc_html($latest_release['tag_name']); ?>
+                            <strong><?php echo esc_html($latest_release['version']); ?></strong>
+                            <?php if (version_compare($latest_release['version'], CFB_VERSION, '>')): ?>
+                                <span style="color: green;">✅ Update available!</span>
+                            <?php else: ?>
+                                <span style="color: blue;">✅ Up to date</span>
+                            <?php endif; ?>
                         <?php else: ?>
-                            ❌ Could not fetch latest release
+                            <span style="color: red;">❌ Could not fetch latest release</span>
                         <?php endif; ?>
                     </td>
                 </tr>
                 <tr>
-                    <th>Current Version</th>
-                    <td><?php echo CFB_VERSION; ?></td>
+                    <th>GitHub Token</th>
+                    <td>
+                        <?php if ($github_token): ?>
+                            <span style="color: green;">✅ Set (<?php echo substr($github_token, 0, 8) . '...'; ?>)</span>
+                        <?php else: ?>
+                            <span style="color: red;">❌ Not set</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>GitHub API Test</th>
+                    <td>
+                        <?php
+                        try {
+                            $api_url = 'https://api.github.com/repos/' . CFB_GITHUB_REPO . '/releases/latest';
+                            $headers = array(
+                                'User-Agent' => 'WordPress/' . get_bloginfo('version'),
+                                'Accept' => 'application/vnd.github.v3+json'
+                            );
+
+                            if (!empty($github_token)) {
+                                $headers['Authorization'] = 'token ' . $github_token;
+                            }
+
+                            $response = wp_remote_get($api_url, array(
+                                'headers' => $headers,
+                                'timeout' => 15
+                            ));
+
+                            if (is_wp_error($response)) {
+                                echo '<span style="color: red;">❌ Error: ' . esc_html($response->get_error_message()) . '</span>';
+                            } else {
+                                $response_code = wp_remote_retrieve_response_code($response);
+                                echo '<span style="color: blue;">Response Code: ' . esc_html($response_code) . '</span>';
+
+                                if ($response_code === 200) {
+                                    $body = wp_remote_retrieve_body($response);
+                                    $release = json_decode($body, true);
+
+                                    if ($release && isset($release['tag_name'])) {
+                                        echo '<br><strong>Latest Release:</strong> ' . esc_html($release['tag_name']);
+
+                                        // Check for ZIP asset
+                                        $has_zip = false;
+                                        if (isset($release['assets']) && is_array($release['assets'])) {
+                                            foreach ($release['assets'] as $asset) {
+                                                if (isset($asset['name']) && $asset['name'] === 'custom-fields-block.zip') {
+                                                    $has_zip = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        echo '<br><strong>ZIP Asset:</strong> ' . ($has_zip ? '✅ Present' : '❌ Missing');
+                                    } else {
+                                        echo '<br><span style="color: red;">❌ Could not parse release data</span>';
+                                    }
+                                } else {
+                                    echo '<br><span style="color: red;">❌ API Error: ' . esc_html($response_code) . '</span>';
+                                }
+                            }
+                        } catch (Exception $e) {
+                            echo '<span style="color: red;">❌ Exception: ' . esc_html($e->getMessage()) . '</span>';
+                        }
+                        ?>
+                    </td>
                 </tr>
             </table>
 
@@ -888,11 +960,31 @@ class CustomFieldsBlock
             <table class="form-table">
                 <tr>
                     <th>Cached Fields</th>
-                    <td><?php echo count($custom_fields); ?></td>
+                    <td><?php echo count($custom_fields); ?> fields</td>
                 </tr>
                 <tr>
                     <th>Cache Status</th>
-                    <td><?php echo get_transient('cfb_all_custom_fields') ? '✅ Active' : '❌ Empty'; ?></td>
+                    <td>
+                        <?php
+                        $cache_data = get_transient('cfb_all_custom_fields');
+                        if ($cache_data): ?>
+                            <span style="color: green;">✅ Active (<?php echo count($cache_data); ?> fields)</span>
+                        <?php else: ?>
+                            <span style="color: red;">❌ Empty</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Update Cache</th>
+                    <td>
+                        <?php
+                        $update_cache = get_transient('cfb_latest_release');
+                        if ($update_cache): ?>
+                            <span style="color: green;">✅ Active</span>
+                        <?php else: ?>
+                            <span style="color: red;">❌ Empty</span>
+                        <?php endif; ?>
+                    </td>
                 </tr>
             </table>
 
@@ -908,9 +1000,61 @@ class CustomFieldsBlock
                 </tr>
                 <tr>
                     <th>Plugin Directory</th>
-                    <td><?php echo CFB_PLUGIN_DIR; ?></td>
+                    <td><code><?php echo CFB_PLUGIN_DIR; ?></code></td>
+                </tr>
+                <tr>
+                    <th>Plugin URL</th>
+                    <td><code><?php echo CFB_PLUGIN_URL; ?></code></td>
+                </tr>
+                <tr>
+                    <th>GitHub Repository</th>
+                    <td><code><?php echo CFB_GITHUB_REPO; ?></code></td>
                 </tr>
             </table>
+
+            <h3>Cache Management</h3>
+            <div class="cfb-actions">
+                <form method="post" style="display: inline;">
+                    <input type="hidden" name="action" value="clear_update_cache">
+                    <?php wp_nonce_field('cfb_clear_update_cache', 'cfb_nonce'); ?>
+                    <button type="submit" class="button button-secondary">
+                        🗑️ Clear Update Cache
+                    </button>
+                </form>
+
+                <form method="post" style="display: inline; margin-left: 10px;">
+                    <input type="hidden" name="action" value="clear_cache">
+                    <?php wp_nonce_field('cfb_clear_cache', 'cfb_nonce'); ?>
+                    <button type="submit" class="button button-secondary">
+                        🗑️ Clear Custom Fields Cache
+                    </button>
+                </form>
+
+                <a href="<?php echo admin_url('update-core.php'); ?>" class="button button-primary" style="margin-left: 10px;">
+                    🔄 Check for Updates
+                </a>
+            </div>
+
+            <h3>Help</h3>
+            <div class="card">
+                <h4>How to get a GitHub Token:</h4>
+                <ol>
+                    <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings → Developer settings → Personal access tokens</a></li>
+                    <li>Click "Generate new token (classic)"</li>
+                    <li>Give it a name like "WordPress Plugin Updates"</li>
+                    <li>Select scopes: <code>repo</code> and <code>workflow</code></li>
+                    <li>Generate and copy the token</li>
+                    <li>Paste it in the Settings tab and save</li>
+                </ol>
+
+                <h4>Creating a Release:</h4>
+                <ol>
+                    <li>Make your changes and commit them</li>
+                    <li>Run: <code>npm run release:patch</code> (or minor/major)</li>
+                    <li>GitHub will automatically create a release with the plugin ZIP</li>
+                    <li>WordPress will detect the update and show it in the admin</li>
+                </ol>
+            </div>
         </div>
 <?php
     }
