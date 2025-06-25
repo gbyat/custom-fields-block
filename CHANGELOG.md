@@ -1,3 +1,8 @@
+## 2025-06-25 08:36:57 - 1.2.12
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-25 08:36:56 - Enhance custom fields block functionality by making database queries less restrictive, adding debug logging, and improving the admin interface with tabs for custom fields management, settings, and debug information. Also, implement a fallback method for retrieving custom fields and update the GitHub token handling in the settings.
 
 ### Changed Files:
