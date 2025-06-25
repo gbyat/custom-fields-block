@@ -1,3 +1,9 @@
+## 2025-06-25 08:20:22 - Fix workflow: sync version before building ZIP
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-25 08:19:56 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
