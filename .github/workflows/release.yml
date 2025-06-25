@@ -53,21 +53,42 @@ jobs:
 
       - name: Delete existing assets
         run: |
-          # Get release ID
-          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" | \
-            jq -r '.id')
+          # Get release ID with error handling
+          RELEASE_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}")
 
-          # Get existing assets
-          ASSETS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets" | \
-            jq -r '.[] | select(.name == "custom-fields-block.zip") | .id')
+          echo "Release response: $RELEASE_RESPONSE"
 
-          # Delete existing assets
-          for asset_id in $ASSETS; do
-            curl -X DELETE -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/releases/assets/$asset_id"
-          done
+          RELEASE_ID=$(echo "$RELEASE_RESPONSE" | jq -r '.id // empty')
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Could not get release ID, skipping asset deletion"
+            exit 0
+          fi
+
+          echo "Release ID: $RELEASE_ID"
+
+          # Get existing assets with error handling
+          ASSETS_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets")
+
+          echo "Assets response: $ASSETS_RESPONSE"
+
+          # Check if response is valid JSON array
+          if echo "$ASSETS_RESPONSE" | jq -e 'type == "array"' > /dev/null 2>&1; then
+            ASSETS=$(echo "$ASSETS_RESPONSE" | jq -r '.[] | select(.name == "custom-fields-block.zip") | .id // empty')
+            
+            # Delete existing assets
+            for asset_id in $ASSETS; do
+              if [ ! -z "$asset_id" ]; then
+                echo "Deleting asset ID: $asset_id"
+                curl -X DELETE -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+                  "https://api.github.com/repos/${{ github.repository }}/releases/assets/$asset_id"
+              fi
+            done
+          else
+            echo "Invalid assets response, skipping deletion"
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
