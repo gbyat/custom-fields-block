@@ -1,3 +1,9 @@
+## 2025-06-25 08:36:56 - Enhance custom fields block functionality by making database queries less restrictive, adding debug logging, and improving the admin interface with tabs for custom fields management, settings, and debug information. Also, implement a fallback method for retrieving custom fields and update the GitHub token handling in the settings.
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-25 08:36:51 - Remove obsolete release-alt.yml workflow
 
 ### Changed Files:
