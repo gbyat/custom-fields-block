@@ -1,3 +1,9 @@
+## 2025-06-25 09:13:47 - Add heading level selection (H1-H6) for custom field blocks
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-25 09:13:31 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
