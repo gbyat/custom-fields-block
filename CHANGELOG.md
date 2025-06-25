@@ -1,3 +1,9 @@
+## 2025-06-25 08:26:41 - Fix GitHub API error handling in asset deletion
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-25 08:26:25 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
