@@ -1,3 +1,8 @@
+## 2025-06-25 08:20:22 - 1.2.10
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-25 08:20:22 - Fix workflow: sync version before building ZIP
 
 ### Changed Files:
