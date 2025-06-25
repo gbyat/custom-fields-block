@@ -1,3 +1,9 @@
+## 2025-06-25 08:07:37 - Enhance custom fields caching with fallback mechanism and update release notes in workflow
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-25 08:07:31 - Bump version to $(node -p 'require(\'./package.json\').version')
 
 ### Changed Files:
