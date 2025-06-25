@@ -1,3 +1,8 @@
+## 2025-06-25 08:11:18 - 1.2.9
+
+### Changed Files:
+- `custom-fields-block.php`
+
 ## 2025-06-25 08:11:17 - Update release workflow to verify version sync before building plugin
 
 ### Changed Files:
