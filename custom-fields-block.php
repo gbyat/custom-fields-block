@@ -527,6 +527,7 @@ class CustomFieldsBlock
     {
         $field_key = isset($attributes['fieldKey']) ? $attributes['fieldKey'] : '';
         $display_type = isset($attributes['displayType']) ? $attributes['displayType'] : 'paragraph';
+        $heading_level = isset($attributes['headingLevel']) ? intval($attributes['headingLevel']) : 2;
         $typography = isset($attributes['typography']) ? $attributes['typography'] : array();
         $colors = isset($attributes['colors']) ? $attributes['colors'] : array();
         $spacing = isset($attributes['spacing']) ? $attributes['spacing'] : array();
@@ -606,15 +607,9 @@ class CustomFieldsBlock
         // Render based on display type
         switch ($display_type) {
             case 'heading':
-                $tag = 'h2';
-                if (!empty($typography['fontSize'])) {
-                    if ($typography['fontSize'] <= 16) $tag = 'h6';
-                    elseif ($typography['fontSize'] <= 20) $tag = 'h5';
-                    elseif ($typography['fontSize'] <= 24) $tag = 'h4';
-                    elseif ($typography['fontSize'] <= 32) $tag = 'h3';
-                    elseif ($typography['fontSize'] <= 40) $tag = 'h2';
-                    else $tag = 'h1';
-                }
+                // Validate heading level (1-6)
+                $heading_level = max(1, min(6, $heading_level));
+                $tag = 'h' . $heading_level;
                 return '<' . $tag . $class_attr . $style_attr . '>' . esc_html($field_value) . '</' . $tag . '>';
 
             case 'paragraph':

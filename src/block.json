@@ -32,6 +32,10 @@
       "type": "string",
       "default": "paragraph"
     },
+    "headingLevel": {
+      "type": "number",
+      "default": 2
+    },
     "typography": {
       "type": "object",
       "default": {}

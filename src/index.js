@@ -17,12 +17,14 @@ import {
     __experimentalNumberControl as NumberControl
 } from '@wordpress/components';
 import { useState, useEffect } from '@wordpress/element';
+import React from 'react';
 
 registerBlockType('custom-fields-block/custom-field', {
     edit: function Edit({ attributes, setAttributes, clientId }) {
         const {
             fieldKey,
             displayType,
+            headingLevel,
             typography,
             colors,
             spacing,
@@ -141,7 +143,7 @@ registerBlockType('custom-fields-block/custom-field', {
             }
 
             const content = displayType === 'heading' ?
-                <h2 style={previewStyles}>{fieldValue}</h2> :
+                React.createElement(`h${headingLevel || 2}`, { style: previewStyles }, fieldValue) :
                 <p style={previewStyles}>{fieldValue}</p>;
 
             return (
@@ -210,6 +212,22 @@ registerBlockType('custom-fields-block/custom-field', {
                             ]}
                             onChange={(value) => setAttributes({ displayType: value })}
                         />
+
+                        {displayType === 'heading' && (
+                            <SelectControl
+                                label={__('Überschriften-Ebene', 'custom-fields-block')}
+                                value={headingLevel || 2}
+                                options={[
+                                    { label: __('H1 - Hauptüberschrift', 'custom-fields-block'), value: 1 },
+                                    { label: __('H2 - Unterüberschrift', 'custom-fields-block'), value: 2 },
+                                    { label: __('H3 - Unterunterüberschrift', 'custom-fields-block'), value: 3 },
+                                    { label: __('H4', 'custom-fields-block'), value: 4 },
+                                    { label: __('H5', 'custom-fields-block'), value: 5 },
+                                    { label: __('H6', 'custom-fields-block'), value: 6 }
+                                ]}
+                                onChange={(value) => setAttributes({ headingLevel: parseInt(value) })}
+                            />
+                        )}
                     </PanelBody>
 
                     <PanelBody title={__('Typografie', 'custom-fields-block')} initialOpen={false}>
