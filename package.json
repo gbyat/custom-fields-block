@@ -30,7 +30,7 @@
     "typography",
     "colors"
   ],
-  "author": "Your Name",
+  "author": "Gabriele Laesser",
   "license": "GPL-2.0-or-later",
   "devDependencies": {
     "@wordpress/scripts": "^26.0.0"

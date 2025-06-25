@@ -1,3 +1,10 @@
+## 2025-06-25 08:19:56 - Bump version to $(node -p 'require(\'./package.json\').version')
+
+### Changed Files:
+- `.github/workflows/release.yml`
+- `custom-fields-block.php`
+- `package.json`
+
 ## 2025-06-25 08:11:18 - 1.2.9
 
 ### Changed Files:

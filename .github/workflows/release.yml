@@ -27,17 +27,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify version sync
+      - name: Sync version first
         run: |
-          echo "Checking if version is properly synced..."
-          PLUGIN_VERSION=$(grep "Version:" custom-fields-block.php | head -1 | sed 's/.*Version: //')
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          echo "Plugin version: $PLUGIN_VERSION"
-          echo "Package version: $PACKAGE_VERSION"
-          if [ "$PLUGIN_VERSION" != "$PACKAGE_VERSION" ]; then
-            echo "Versions don't match! Syncing..."
-            npm run version-sync
-          fi
+          echo "Syncing version before building..."
+          npm run version-sync
+          echo "Version sync completed"
 
       - name: Build plugin
         run: npm run build
