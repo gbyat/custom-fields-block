@@ -40,8 +40,9 @@ class CustomFieldsBlock
         add_filter('plugins_api', array($this, 'plugin_info'), 10, 3);
         add_filter('upgrader_post_install', array($this, 'upgrader_post_install'), 10, 3);
 
-        // Admin settings
-        add_action('admin_menu', array($this, 'add_admin_menu'));
+        // Admin settings - remove old menu first, then add new one
+        add_action('admin_menu', array($this, 'remove_old_menu'), 5);
+        add_action('admin_menu', array($this, 'add_admin_menu'), 10);
         add_action('admin_init', array($this, 'init_settings'));
 
         // Cache management
@@ -50,6 +51,14 @@ class CustomFieldsBlock
         add_action('updated_post_meta', array($this, 'clear_custom_fields_cache'));
         add_action('added_post_meta', array($this, 'clear_custom_fields_cache'));
         add_action('deleted_post_meta', array($this, 'clear_custom_fields_cache'));
+    }
+
+    /**
+     * Remove old admin menu to prevent conflicts
+     */
+    public function remove_old_menu()
+    {
+        remove_submenu_page('options-general.php', 'custom-fields-block-settings');
     }
 
     /**
