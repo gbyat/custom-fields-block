@@ -1,3 +1,9 @@
+## 2025-06-25 08:01:57 - Bump version to $(node -p 'require(\'./package.json\').version')
+
+### Changed Files:
+- `package-lock.json`
+- `package.json`
+
 ## 2025-06-24 22:01:23 - 1.2.6
 
 ### Changed Files:
